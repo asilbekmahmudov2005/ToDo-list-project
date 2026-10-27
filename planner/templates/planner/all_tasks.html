@@ -1,0 +1,139 @@
+{% extends "planner/base.html" %}
+
+{% block title %}Barcha vazifalar{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div class="section-title">
+    <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
+    Barcha vazifalar
+  </div>
+  <button class="btn-primary open-create-task-modal">
+    <i class="fa-solid fa-plus"></i> Yangi vazifa
+  </button>
+</div>
+
+<!-- Qidiruv va Filterlar -->
+<div class="filter-card">
+  <form method="GET" class="filter-form">
+    <div class="filter-input-group">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" name="q" class="form-input" placeholder="Vazifalarni qidirish..." value="{{ request.GET.q }}">
+    </div>
+
+    <div style="min-width: 140px;">
+      <input type="date" name="date" class="form-input" value="{{ request.GET.date }}" title="Sana bo‘yicha filter">
+    </div>
+
+    <div style="min-width: 140px;">
+      <select name="category" class="form-select">
+        <option value="">Kategoriya: Barchasi</option>
+        {% for cat_val, cat_label in categories %}
+        <option value="{{ cat_val }}" {% if request.GET.category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="min-width: 140px;">
+      <select name="priority" class="form-select">
+        <option value="">Muhimlik: Barchasi</option>
+        {% for prio_val, prio_label in priorities %}
+        <option value="{{ prio_val }}" {% if request.GET.priority == prio_val %}selected{% endif %}>{{ prio_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="min-width: 140px;">
+      <select name="status" class="form-select">
+        <option value="">Holat: Barchasi</option>
+        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Bajarilmagan</option>
+        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Bajarilgan</option>
+      </select>
+    </div>
+
+    <div style="min-width: 150px;">
+      <select name="sort" class="form-select">
+        <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Sana (yangilari oldin)</option>
+        <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Sana (eskilar oldin)</option>
+        <option value="priority" {% if request.GET.sort == 'priority' %}selected{% endif %}>Muhimlik bo‘yicha</option>
+        <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>Nomi bo‘yicha</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn-primary" style="padding: 10px 18px;">
+      <i class="fa-solid fa-filter"></i> Filter
+    </button>
+    {% if request.GET.q or request.GET.date or request.GET.category or request.GET.priority or request.GET.status or request.GET.sort %}
+    <a href="{% url 'all_tasks' %}" class="btn-secondary" style="padding: 10px 14px;">
+      Tozalash
+    </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Vazifalar ro'yxati -->
+<div class="task-list">
+  {% for task in tasks %}
+  <div class="task-item {% if task.is_completed %}completed{% endif %}">
+    <div class="task-left">
+      <form class="task-check-form" action="{% url 'task_toggle_status' task.id %}" method="POST">
+        {% csrf_token %}
+        <button type="submit" class="task-check-btn {% if task.is_completed %}checked{% endif %}">
+          {% if task.is_completed %}
+          <i class="fa-solid fa-check"></i>
+          {% endif %}
+        </button>
+      </form>
+      <div class="task-details">
+        <div class="task-title">{{ task.title }}</div>
+        {% if task.description %}
+        <div class="task-desc">{{ task.description }}</div>
+        {% endif %}
+        <div class="task-meta">
+          <span class="meta-item" style="color: var(--primary); font-weight: 600;">
+            <i class="fa-regular fa-calendar"></i>
+            {{ task.date|date:"d.m.Y" }}
+          </span>
+          {% if task.start_time %}
+          <span class="meta-item">
+            <i class="fa-regular fa-clock"></i>
+            {{ task.start_time|time:"H:i" }}{% if task.end_time %} - {{ task.end_time|time:"H:i" }}{% endif %}
+          </span>
+          {% endif %}
+          {% if task.duration %}
+          <span class="meta-item">
+            <i class="fa-solid fa-stopwatch"></i>
+            {{ task.duration }} daqiqa
+          </span>
+          {% endif %}
+          <span class="badge badge-category">
+            <i class="fa-solid fa-tag"></i> {{ task.get_category_display }}
+          </span>
+          <span class="badge badge-{{ task.priority }}">
+            {{ task.get_priority_display }} muhimlik
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="task-actions">
+      <button class="action-btn open-edit-task-modal" data-id="{{ task.id }}" title="Tahrirlash">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </button>
+      <button class="action-btn delete open-delete-modal" data-id="{{ task.id }}" data-title="{{ task.title }}" title="O‘chirish">
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fa-solid fa-list-check"></i></div>
+    <h4>Vazifalar mavjud emas</h4>
+    <p>Hozircha hech qanday vazifa topilmadi yoki filtr bo‘yicha natija yo‘q.</p>
+    <button class="btn-primary open-create-task-modal">
+      <i class="fa-solid fa-plus"></i> Yangi vazifa yaratish
+    </button>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

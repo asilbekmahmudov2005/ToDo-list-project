@@ -1,0 +1,115 @@
+{% extends "planner/base.html" %}
+{% load planner_tags %}
+
+{% block title %}Taqvim{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+  <!-- Chap tomon: Oylik taqvim -->
+  <div class="calendar-card">
+    <div class="calendar-nav">
+      <div>
+        <h2 style="font-size: 1.4rem; font-weight: 700; color: var(--text-main);">{{ month_name }} {{ year }}</h2>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="{% url 'calendar' %}?year={{ prev_year }}&month={{ prev_month }}" class="btn-secondary" style="padding: 6px 12px;">
+          <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        <a href="{% url 'calendar' %}?year={{ today.year }}&month={{ today.month }}&date={{ today|date:'Y-m-d' }}" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">
+          Bugun
+        </a>
+        <a href="{% url 'calendar' %}?year={{ next_year }}&month={{ next_month }}" class="btn-secondary" style="padding: 6px 12px;">
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Hafta kunlari sarlavhasi -->
+    <div class="calendar-grid" style="margin-bottom: 8px;">
+      <div class="cal-header-day">Dush</div>
+      <div class="cal-header-day">Sesh</div>
+      <div class="cal-header-day">Chor</div>
+      <div class="cal-header-day">Pay</div>
+      <div class="cal-header-day">Jum</div>
+      <div class="cal-header-day" style="color: var(--primary);">Shan</div>
+      <div class="cal-header-day" style="color: var(--danger);">Yak</div>
+    </div>
+
+    <!-- Kunlar katakchalari -->
+    <div class="calendar-grid">
+      {% for week in month_days %}
+        {% for day in week %}
+          {% with day_str=day|date:"Y-m-d" %}
+          {% with day_tasks=tasks_by_date|get_item:day_str %}
+          <a href="{% url 'calendar' %}?year={{ year }}&month={{ month }}&date={{ day_str }}" 
+             class="cal-day-cell {% if day.month != month %}other-month{% endif %} {% if day == today %}is-today{% endif %} {% if day == selected_date %}is-selected{% endif %}">
+            <span style="font-size: 0.95rem; font-weight: 600;">{{ day.day }}</span>
+            {% if day_tasks %}
+            <span class="cal-badge" title="{{ day_tasks|length }} ta vazifa">
+              {{ day_tasks|length }}
+            </span>
+            {% endif %}
+          </a>
+          {% endwith %}
+          {% endwith %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- O'ng tomon: Tanlangan kun vazifalari -->
+  <div class="calendar-card" style="display: flex; flex-direction: column;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div>
+        <h3 style="font-size: 1.1rem; font-weight: 700;">{{ selected_date|date:"j-F, Y" }}</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ selected_date|date:"l" }} vazifalari</span>
+      </div>
+      <button class="btn-primary open-create-task-modal" data-date="{{ selected_date|date:'Y-m-d' }}" style="padding: 6px 12px; font-size: 0.85rem;">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+
+    <div class="task-list" style="overflow-y: auto; max-height: 500px; flex: 1;">
+      {% for task in selected_date_tasks %}
+      <div class="task-item {% if task.is_completed %}completed{% endif %}" style="padding: 12px;">
+        <div class="task-left">
+          <form class="task-check-form" action="{% url 'task_toggle_status' task.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="task-check-btn {% if task.is_completed %}checked{% endif %}">
+              {% if task.is_completed %}
+              <i class="fa-solid fa-check"></i>
+              {% endif %}
+            </button>
+          </form>
+          <div class="task-details">
+            <div class="task-title" style="font-size: 0.9rem;">{{ task.title }}</div>
+            <div class="task-meta">
+              {% if task.start_time %}
+              <span class="meta-item"><i class="fa-regular fa-clock"></i> {{ task.start_time|time:"H:i" }}</span>
+              {% endif %}
+              <span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="action-btn open-edit-task-modal" data-id="{{ task.id }}" title="Tahrirlash">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
+          <button class="action-btn delete open-delete-modal" data-id="{{ task.id }}" data-title="{{ task.title }}" title="O‘chirish">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state" style="padding: 30px 10px;">
+        <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; color: var(--text-light); margin-bottom: 8px;"></i>
+        <p style="font-size: 0.85rem; margin-bottom: 12px;">Ushbu kunga rejalashtirilgan vazifalar yo‘q.</p>
+        <button class="btn-primary open-create-task-modal" data-date="{{ selected_date|date:'Y-m-d' }}" style="padding: 7px 14px; font-size: 0.85rem;">
+          <i class="fa-solid fa-plus"></i> Qo‘shish
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

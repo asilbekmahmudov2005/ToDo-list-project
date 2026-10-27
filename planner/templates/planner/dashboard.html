@@ -1,0 +1,134 @@
+{% extends "planner/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Salomlashuv va Motivatsion Banner -->
+<div class="greeting-hero">
+  <div>
+    <div class="greeting-title">{{ greeting }}, {{ user.first_name|default:user.username }}! 👋</div>
+    <div class="greeting-date">Bugun: {{ today|date:"l, j-F, Y" }}</div>
+    <div class="greeting-quote">“Bugungi rejangizni amalga oshirishga tayyormisiz? Har bir kichik qadam katta muvaffaqiyatga olib boradi!”</div>
+  </div>
+</div>
+
+<!-- Statistik Kartochkalar -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon total">
+      <i class="fa-solid fa-layer-group"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Jami vazifalar</h3>
+      <p id="stat-total-today">{{ total_today }}</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon completed">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Bajarilgan</h3>
+      <p id="stat-completed-today">{{ completed_today }}</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon pending">
+      <i class="fa-solid fa-clock"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Bajarilmagan</h3>
+      <p id="stat-pending-today">{{ pending_today }}</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon progress">
+      <i class="fa-solid fa-chart-line"></i>
+    </div>
+    <div class="stat-info" style="width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <h3>Bajarilish ko‘rsatkichi</h3>
+        <span id="stat-progress-percent" style="font-weight: 700; font-size: 1.1rem; color: var(--primary);">{{ progress_percentage }}%</span>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" id="dashboard-progress-bar" style="width: {{ progress_percentage }}%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bugungi Vazifalar Qismi -->
+<div class="section-header">
+  <div class="section-title">
+    <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
+    Bugungi vazifalar
+  </div>
+  <button class="btn-primary open-create-task-modal">
+    <i class="fa-solid fa-plus"></i> Vazifa qo‘shish
+  </button>
+</div>
+
+<div class="task-list">
+  {% for task in today_tasks %}
+  <div class="task-item {% if task.is_completed %}completed{% endif %}" id="task-card-{{ task.id }}">
+    <div class="task-left">
+      <form class="task-check-form" action="{% url 'task_toggle_status' task.id %}" method="POST">
+        {% csrf_token %}
+        <button type="submit" class="task-check-btn {% if task.is_completed %}checked{% endif %}" title="Holatini o‘zgartirish">
+          {% if task.is_completed %}
+          <i class="fa-solid fa-check"></i>
+          {% endif %}
+        </button>
+      </form>
+      <div class="task-details">
+        <div class="task-title">{{ task.title }}</div>
+        {% if task.description %}
+        <div class="task-desc">{{ task.description }}</div>
+        {% endif %}
+        <div class="task-meta">
+          {% if task.start_time %}
+          <span class="meta-item">
+            <i class="fa-regular fa-clock"></i>
+            {{ task.start_time|time:"H:i" }}{% if task.end_time %} - {{ task.end_time|time:"H:i" }}{% endif %}
+          </span>
+          {% endif %}
+          {% if task.duration %}
+          <span class="meta-item">
+            <i class="fa-solid fa-stopwatch"></i>
+            {{ task.duration }} daqiqa
+          </span>
+          {% endif %}
+          <span class="badge badge-category">
+            <i class="fa-solid fa-tag"></i> {{ task.get_category_display }}
+          </span>
+          <span class="badge badge-{{ task.priority }}">
+            {{ task.get_priority_display }} muhimlik
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="task-actions">
+      <button class="action-btn open-edit-task-modal" data-id="{{ task.id }}" title="Tahrirlash">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </button>
+      <button class="action-btn delete open-delete-modal" data-id="{{ task.id }}" data-title="{{ task.title }}" title="O‘chirish">
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fa-regular fa-clipboard"></i></div>
+    <h4>Bugun uchun hech qanday vazifa rejalashtirilmagan</h4>
+    <p>Kunni unumli o‘tkazish uchun yangi vazifa qo‘shing!</p>
+    <button class="btn-primary open-create-task-modal">
+      <i class="fa-solid fa-plus"></i> Yangi vazifa yaratish
+    </button>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "planner/base.html" %}
+
+{% block title %}Ro‘yxatdan o‘tish{% endblock %}
+
+{% block auth_content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-icon">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <h2>Hisob yaratish</h2>
+      <p>Unumdorlik sari birinchi qadamni tashlang</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="messages-container">
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+        <div class="alert alert-error">
+          <span><i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i>{{ error }}</span>
+        </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'register' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Foydalanuvchi nomi (login) *</label>
+        {{ form.username }}
+      </div>
+
+      <div class="form-group">
+        <label>Ismingiz</label>
+        {{ form.first_name }}
+      </div>
+
+      <div class="form-group">
+        <label>Elektron pochta</label>
+        {{ form.email }}
+      </div>
+
+      <div class="form-group">
+        <label>Parol *</label>
+        {{ form.password }}
+        <small style="color: var(--text-light); font-size: 0.8rem;">Kamida 6 ta belgi bo‘lishi lozim.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Parolni tasdiqlang *</label>
+        {{ form.confirm_password }}
+      </div>
+
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 10px;">
+        <i class="fa-solid fa-user-check"></i> Ro‘yxatdan o‘tish
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Allaqachon hisobingiz bormi? <a href="{% url 'login' %}">Tizimga kirish</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

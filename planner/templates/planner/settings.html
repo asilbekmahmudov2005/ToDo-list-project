@@ -1,0 +1,57 @@
+{% extends "planner/base.html" %}
+
+{% block title %}Sozlamalar{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div class="section-title">
+    <i class="fa-solid fa-gear" style="color: var(--primary);"></i>
+    Profil va ilova sozlamalari
+  </div>
+</div>
+
+<div style="max-width: 680px; margin-top: 10px;">
+  <div class="chart-card">
+    <h4 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <i class="fa-regular fa-user" style="margin-right: 8px; color: var(--primary);"></i>Profil maʼlumotlari
+    </h4>
+    
+    <form method="POST" action="{% url 'settings' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Foydalanuvchi nomi (login)</label>
+        <input type="text" class="form-input" value="{{ user.username }}" disabled style="background: var(--bg-primary); cursor: not-allowed;">
+        <small style="color: var(--text-light); font-size: 0.8rem;">Loginni o‘zgartirib bo‘lmaydi.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Ismingiz</label>
+        <input type="text" name="first_name" class="form-input" value="{{ user.first_name }}" placeholder="Ismingizni kiriting">
+      </div>
+
+      <div class="form-group">
+        <label>Elektron pochta</label>
+        <input type="email" name="email" class="form-input" value="{{ user.email }}" placeholder="Elektron pochta manzilingiz">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button type="submit" class="btn-primary">
+          <i class="fa-regular fa-floppy-disk"></i> O‘zgarishlarni saqlash
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="chart-card" style="margin-top: 24px;">
+    <h4 style="margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <i class="fa-solid fa-sliders" style="margin-right: 8px; color: var(--primary);"></i>Ilova maʼlumotlari
+    </h4>
+    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; color: var(--text-muted);">
+      <div><strong>Tizim tili:</strong> O‘zbekcha (Lotin)</div>
+      <div><strong>Vaqt mintaqasi:</strong> Asia/Tashkent (GMT+5)</div>
+      <div><strong>Versiya:</strong> Daily Planner v1.0.0 (SaaS Edition)</div>
+      <div><strong>Maʼlumotlar bazasi:</strong> SQLite3 (Serverda xavfsiz saqlanadi)</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

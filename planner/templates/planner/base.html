@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Kunlik vazifalar rejalashtiruvchisi{% endblock %} — Daily Planner</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="app-container">
+    {% if user.is_authenticated %}
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:35;"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="brand-text">
+          <h2>Daily Planner</h2>
+          <span>Kunlik rejalashtiruvchi</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="{% url 'dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'today_tasks' %}" class="nav-link {% if active_menu == 'today' %}active{% endif %}">
+          <i class="fa-solid fa-calendar-day"></i>
+          <span>Bugungi vazifalar</span>
+        </a>
+        <a href="{% url 'all_tasks' %}" class="nav-link {% if active_menu == 'all_tasks' %}active{% endif %}">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Barcha vazifalar</span>
+        </a>
+        <a href="{% url 'calendar' %}" class="nav-link {% if active_menu == 'calendar' %}active{% endif %}">
+          <i class="fa-regular fa-calendar-days"></i>
+          <span>Taqvim</span>
+        </a>
+        <a href="{% url 'statistics' %}" class="nav-link {% if active_menu == 'statistics' %}active{% endif %}">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Statistikalar</span>
+        </a>
+        <a href="{% url 'settings' %}" class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
+          <i class="fa-solid fa-gear"></i>
+          <span>Sozlamalar</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-summary">
+          <div class="user-avatar">
+            {{ user.username|slice:":1"|upper }}
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ user.first_name|default:user.username }}</div>
+            <div class="user-email">{{ user.email|default:"Foydalanuvchi" }}</div>
+          </div>
+        </div>
+        <a href="{% url 'logout' %}" class="btn-secondary" style="justify-content: center; width: 100%;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Chiqish
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menu-toggle">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div style="font-size: 0.95rem; color: var(--text-muted); font-weight: 500;">
+            <i class="fa-regular fa-calendar" style="margin-right: 6px;"></i>
+            {{ today|date:"l, j-F, Y"|default:"" }}
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" title="Mavzuni almashtirish">
+            <i id="theme-icon" class="fa-solid fa-moon"></i>
+          </button>
+          <button class="btn-primary open-create-task-modal">
+            <i class="fa-solid fa-plus"></i> Yangi vazifa
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="content-area">
+        {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            <span><i class="fa-solid fa-circle-info" style="margin-right: 8px;"></i>{{ message }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <!-- Vazifa yaratish va tahrirlash modali -->
+    <div class="modal-overlay" id="task-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="task-modal-title">Yangi vazifa yaratish</h3>
+          <button class="modal-close-btn close-modal-btn">&times;</button>
+        </div>
+        <form id="task-form" method="POST" action="{% url 'task_create' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Vazifa nomi *</label>
+              <input type="text" name="title" class="form-input" placeholder="Masalan: Dasturlash darsini tayyorlash" required>
+            </div>
+            <div class="form-group">
+              <label>Vazifa tavsifi</label>
+              <textarea name="description" class="form-textarea" rows="3" placeholder="Qo‘shimcha tafsilotlar..."></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Sana *</label>
+                <input type="date" name="date" class="form-input" required value="{{ today|date:'Y-m-d' }}">
+              </div>
+              <div class="form-group">
+                <label>Muhimlik darajasi</label>
+                <select name="priority" class="form-select">
+                  <option value="low">Past</option>
+                  <option value="medium" selected>O‘rta</option>
+                  <option value="high">Yuqori</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Kategoriya</label>
+                <select name="category" class="form-select">
+                  <option value="work">Ish</option>
+                  <option value="study">O‘qish</option>
+                  <option value="personal" selected>Shaxsiy</option>
+                  <option value="health">Sog‘liq</option>
+                  <option value="other">Boshqa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Davomiyligi (daqiqa)</label>
+                <input type="number" name="duration" class="form-input" placeholder="Masalan: 30" min="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Boshlanish vaqti</label>
+                <input type="time" name="start_time" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Tugash vaqti</label>
+                <input type="time" name="end_time" class="form-input">
+              </div>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+              <input type="checkbox" name="is_completed" id="modal-task-completed" class="form-checkbox" style="width: 18px; height: 18px;">
+              <label for="modal-task-completed" style="margin-bottom: 0; cursor: pointer;">Vazifa allaqachon bajarilgan deb belgilansin</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary close-modal-btn">Bekor qilish</button>
+            <button type="submit" class="btn-primary">Saqlash</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- O'chirishni tasdiqlash modali -->
+    <div class="modal-overlay" id="delete-modal">
+      <div class="modal-box" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>O‘chirishni tasdiqlang</h3>
+          <button class="modal-close-btn close-modal-btn">&times;</button>
+        </div>
+        <form id="delete-task-form" method="POST">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p>Haqiqatan ham <strong id="delete-task-title"></strong> vazifasini o‘chirib tashlamoqchimisiz?</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">Bu amalni ortga qaytarib bo‘lmaydi.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary close-modal-btn">Bekor qilish</button>
+            <button type="submit" class="btn-danger">O‘chirish</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Foydalanuvchi tizimga kirmagan holatda -->
+    <div style="width: 100%;">
+      {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- JavaScript -->
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

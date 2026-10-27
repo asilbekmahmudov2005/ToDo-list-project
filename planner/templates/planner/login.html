@@ -1,0 +1,52 @@
+{% extends "planner/base.html" %}
+
+{% block title %}Tizimga kirish{% endblock %}
+
+{% block auth_content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="brand-icon">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <h2>Daily Planner</h2>
+      <p>Kunlik rejalaringizni boshqarish uchun tizimga kiring</p>
+    </div>
+
+    {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Foydalanuvchi nomi</label>
+        <div style="position: relative;">
+          <input type="text" name="username" class="form-input" placeholder="Loginni kiriting" required autofocus>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Parol</label>
+        <div style="position: relative;">
+          <input type="password" name="password" class="form-input" placeholder="Parolni kiriting" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 10px;">
+        <i class="fa-solid fa-right-to-bracket"></i> Kirish
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Hisobingiz yo‘qmi? <a href="{% url 'register' %}">Ro‘yxatdan o‘tish</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
